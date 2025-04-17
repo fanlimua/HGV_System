@@ -1,0 +1,187 @@
+import cv2
+import mediapipe as mp
+import math
+import numpy as np
+
+
+# Calculate angle between thumb vector and vertical line
+def calculate_relative_angle(hand_landmarks, image_width, image_height, is_right):
+    thumb_tip = hand_landmarks.landmark[mp_hands.HandLandmark.THUMB_TIP]
+    thumb_ip = hand_landmarks.landmark[mp_hands.HandLandmark.THUMB_IP]
+
+    # Convert to pixel coordinates
+    x1, y1 = int(thumb_tip.x * image_width), int(thumb_tip.y * image_height)
+    x2, y2 = int(thumb_ip.x * image_width), int(thumb_ip.y * image_height)
+
+    # Thumb vector
+    dx = x1 - x2
+    dy = y2 - y1  # invert y for standard math coord
+
+    # Reference vertical line direction: (0, 1)
+    angle_rad = math.atan2(dx, dy)
+    angle_deg = math.degrees(angle_rad)
+
+    return round(angle_deg, 2)
+
+# Check if hand is fully open (all fingers extended)
+def is_hand_open_1(hand_landmarks):
+    tips_ids = [mp_hands.HandLandmark.THUMB_TIP,
+                mp_hands.HandLandmark.INDEX_FINGER_TIP,
+                mp_hands.HandLandmark.MIDDLE_FINGER_TIP,
+                mp_hands.HandLandmark.RING_FINGER_TIP,
+                mp_hands.HandLandmark.PINKY_TIP]
+    pip_ids = [mp_hands.HandLandmark.THUMB_IP,
+               mp_hands.HandLandmark.INDEX_FINGER_PIP,
+               mp_hands.HandLandmark.MIDDLE_FINGER_PIP,
+               mp_hands.HandLandmark.RING_FINGER_PIP,
+               mp_hands.HandLandmark.PINKY_PIP]
+
+    open_count = 0
+    for tip_id, pip_id in zip(tips_ids, pip_ids):
+        if hand_landmarks.landmark[tip_id].y < hand_landmarks.landmark[pip_id].y:
+            open_count += 1
+    return open_count >= 5
+
+def is_hand_open(hand_landmarks, threshold=0.22):
+
+    wrist = hand_landmarks.landmark[mp_hands.HandLandmark.WRIST]
+    middle_tip = hand_landmarks.landmark[mp_hands.HandLandmark.MIDDLE_FINGER_TIP]
+
+    
+    distance = math.dist([wrist.x, wrist.y], [middle_tip.x, middle_tip.y])
+    # print(f"Distance: {distance}")
+
+    return distance > threshold
+
+
+# Check if thumb up and other fingers folded
+def is_thumb_up(hand_landmarks):
+    thumb_tip = hand_landmarks.landmark[mp_hands.HandLandmark.THUMB_TIP]
+    thumb_ip = hand_landmarks.landmark[mp_hands.HandLandmark.THUMB_IP]
+
+    fingers_folded = (
+        hand_landmarks.landmark[mp_hands.HandLandmark.INDEX_FINGER_TIP].y >
+        hand_landmarks.landmark[mp_hands.HandLandmark.INDEX_FINGER_PIP].y and
+        hand_landmarks.landmark[mp_hands.HandLandmark.MIDDLE_FINGER_TIP].y >
+        hand_landmarks.landmark[mp_hands.HandLandmark.MIDDLE_FINGER_PIP].y and
+        hand_landmarks.landmark[mp_hands.HandLandmark.RING_FINGER_TIP].y >
+        hand_landmarks.landmark[mp_hands.HandLandmark.RING_FINGER_PIP].y and
+        hand_landmarks.landmark[mp_hands.HandLandmark.PINKY_TIP].y >
+        hand_landmarks.landmark[mp_hands.HandLandmark.PINKY_PIP].y
+    )
+
+    return (thumb_tip.y < thumb_ip.y) and fingers_folded
+
+def are_fingers_folded(hand_landmarks):
+    """
+    Check if index, middle, ring, and pinky fingers are folded.
+    A finger is considered folded if:
+        distance(tip, mcp) < distance(pip, mcp)
+    """
+    folded_finger_count = 0
+
+    finger_ids = [
+        (mp_hands.HandLandmark.INDEX_FINGER_TIP, mp_hands.HandLandmark.INDEX_FINGER_PIP, mp_hands.HandLandmark.INDEX_FINGER_MCP, "Index Finger"),
+        (mp_hands.HandLandmark.MIDDLE_FINGER_TIP, mp_hands.HandLandmark.MIDDLE_FINGER_PIP, mp_hands.HandLandmark.MIDDLE_FINGER_MCP, "Middle Finger"),
+        (mp_hands.HandLandmark.RING_FINGER_TIP, mp_hands.HandLandmark.RING_FINGER_PIP, mp_hands.HandLandmark.RING_FINGER_MCP, "Ring Finger"),
+        (mp_hands.HandLandmark.PINKY_TIP, mp_hands.HandLandmark.PINKY_PIP, mp_hands.HandLandmark.PINKY_MCP, "Pinky Finger"),
+    ]
+
+    # thumb_tip = hand_landmarks.landmark[mp_hands.HandLandmark.THUMB_TIP]
+    # thumb_ip = hand_landmarks.landmark[mp_hands.HandLandmark.THUMB_IP]
+
+    # if thumb_tip.y < thumb_ip.y:
+    #     folded_finger_count += 1
+
+    for tip_id, pip_id, mcp_id, finger_name in finger_ids:
+        tip = hand_landmarks.landmark[tip_id]
+        pip = hand_landmarks.landmark[pip_id]
+        mcp = hand_landmarks.landmark[mcp_id]
+
+        # Compute distances
+        dist_tip_mcp = math.dist([tip.x, tip.y], [mcp.x, mcp.y])
+        dist_pip_mcp = math.dist([pip.x, pip.y], [mcp.x, mcp.y])
+        # print(f"Tip: {[tip.x, tip.y]}; Pip: {[pip.x, pip.y]}; Mcp: {[mcp.x, mcp.y]}.")
+
+        if dist_tip_mcp < dist_pip_mcp:
+            folded_finger_count += 1
+        # if dist_tip_mcp < dist_pip_mcp:
+        #     print(f"{finger_name}: Tip to MCP distance < Pip to MCP distance")
+        #     folded_finger_count += 1
+        # else:
+        #     print(f"{finger_name}: Tip to MCP distance >= Pip to MCP distance")
+
+    return folded_finger_count == 4
+
+# Initialize MediaPipe
+mp_hands = mp.solutions.hands
+hands = mp_hands.Hands(static_image_mode=False,
+                       max_num_hands=2,
+                       min_detection_confidence=0.7,
+                       min_tracking_confidence=0.7)
+mp_drawing = mp.solutions.drawing_utils
+
+# Start video capture
+cap = cv2.VideoCapture(0)
+started = False
+
+while cap.isOpened():
+    success, image = cap.read()
+    if not success:
+        continue
+
+    image = cv2.flip(image, 1)
+    image_rgb = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+    results = hands.process(image_rgb)
+
+    image_height, image_width = image.shape[:2]
+    left_line_x = image_width // 4
+    right_line_x = image_width * 3 // 4
+
+    left_angle = None
+    right_angle = None
+
+    # Draw vertical reference lines
+    cv2.line(image, (left_line_x, 0), (left_line_x, image_height), (200, 200, 200), 2)
+    cv2.line(image, (right_line_x, 0), (right_line_x, image_height), (200, 200, 200), 2)
+
+    if results.multi_hand_landmarks and results.multi_handedness:
+        hands_data = list(zip(results.multi_hand_landmarks, results.multi_handedness))
+
+        for hand_landmarks, _ in hands_data:
+            if are_fingers_folded(hand_landmarks):  
+                started = True
+                break  
+
+        if started:
+        # if is_thumb_up(hand_landmarks):
+            cv2.putText(image, "Start", (10, 40), cv2.FONT_HERSHEY_SIMPLEX, 1.2, (0, 255, 0), 3)
+
+            for hand_landmarks, handedness in hands_data:
+                label = handedness.classification[0].label  # 'Left' or 'Right' Hand
+
+                angle = calculate_relative_angle(
+                    hand_landmarks, image_width, image_height, is_right=(label == 'Right')
+                )
+                if label == 'Right':
+                    right_angle = angle
+                else:
+                    left_angle = angle
+
+                mp_drawing.draw_landmarks(image, hand_landmarks, mp_hands.HAND_CONNECTIONS)
+
+                if is_hand_open(hand_landmarks):
+                    started = False
+
+    # Display angles
+    if right_angle is not None:
+        cv2.putText(image, f"Right Thumb Angle: {right_angle:+}", (10, 80), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 150, 255), 2)
+    if left_angle is not None:
+        cv2.putText(image, f"Left Thumb Angle: {left_angle:+}", (10, 120), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 100, 100), 2)
+
+    cv2.imshow("Gesture Control", image)
+    if cv2.waitKey(5) & 0xFF == 27:
+        break
+
+cap.release()
+cv2.destroyAllWindows()
