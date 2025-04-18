@@ -27,25 +27,6 @@ def calculate_relative_angle(hand_landmarks, image_width, image_height, is_right
 
     return round(angle_deg, 2)
 
-# Check if hand is fully open (all fingers extended)
-def is_hand_open_1(hand_landmarks):
-    tips_ids = [mp_hands.HandLandmark.THUMB_TIP,
-                mp_hands.HandLandmark.INDEX_FINGER_TIP,
-                mp_hands.HandLandmark.MIDDLE_FINGER_TIP,
-                mp_hands.HandLandmark.RING_FINGER_TIP,
-                mp_hands.HandLandmark.PINKY_TIP]
-    pip_ids = [mp_hands.HandLandmark.THUMB_IP,
-               mp_hands.HandLandmark.INDEX_FINGER_PIP,
-               mp_hands.HandLandmark.MIDDLE_FINGER_PIP,
-               mp_hands.HandLandmark.RING_FINGER_PIP,
-               mp_hands.HandLandmark.PINKY_PIP]
-
-    open_count = 0
-    for tip_id, pip_id in zip(tips_ids, pip_ids):
-        if hand_landmarks.landmark[tip_id].y < hand_landmarks.landmark[pip_id].y:
-            open_count += 1
-    return open_count >= 5
-
 def is_hand_open(hand_landmarks, threshold=0.22):
 
     wrist = hand_landmarks.landmark[mp_hands.HandLandmark.WRIST]
@@ -56,25 +37,6 @@ def is_hand_open(hand_landmarks, threshold=0.22):
     # print(f"Distance: {distance}")
 
     return distance > threshold
-
-
-# Check if thumb up and other fingers folded
-def is_thumb_up(hand_landmarks):
-    thumb_tip = hand_landmarks.landmark[mp_hands.HandLandmark.THUMB_TIP]
-    thumb_ip = hand_landmarks.landmark[mp_hands.HandLandmark.THUMB_IP]
-
-    fingers_folded = (
-        hand_landmarks.landmark[mp_hands.HandLandmark.INDEX_FINGER_TIP].y >
-        hand_landmarks.landmark[mp_hands.HandLandmark.INDEX_FINGER_PIP].y and
-        hand_landmarks.landmark[mp_hands.HandLandmark.MIDDLE_FINGER_TIP].y >
-        hand_landmarks.landmark[mp_hands.HandLandmark.MIDDLE_FINGER_PIP].y and
-        hand_landmarks.landmark[mp_hands.HandLandmark.RING_FINGER_TIP].y >
-        hand_landmarks.landmark[mp_hands.HandLandmark.RING_FINGER_PIP].y and
-        hand_landmarks.landmark[mp_hands.HandLandmark.PINKY_TIP].y >
-        hand_landmarks.landmark[mp_hands.HandLandmark.PINKY_PIP].y
-    )
-
-    return (thumb_tip.y < thumb_ip.y) and fingers_folded
 
 def are_fingers_folded(hand_landmarks):
     """
@@ -158,7 +120,6 @@ while cap.isOpened():
                 break  
 
         if started:
-        # if is_thumb_up(hand_landmarks):
             cv2.putText(image, "Start", (10, 40), cv2.FONT_HERSHEY_SIMPLEX, 1.2, (0, 255, 0), 3)
 
             for hand_landmarks, handedness in hands_data:
