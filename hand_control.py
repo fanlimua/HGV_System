@@ -2,6 +2,10 @@ import cv2
 import mediapipe as mp
 import math
 import numpy as np
+from fuzzy_controller import fuzzy_control
+from simulator import CarSimulator
+
+sim = CarSimulator()
 
 
 # Calculate angle between thumb vector and vertical line
@@ -167,6 +171,17 @@ while cap.isOpened():
                     right_angle = angle
                 else:
                     left_angle = angle
+                
+                # print(f"{right_angle}, {left_angle}")
+                if right_angle is not None and left_angle is not None:
+                    steering_angle, speed = fuzzy_control(right_angle, abs(left_angle))
+                    sim.update(steering_angle, speed)
+                    sim_img = sim.draw()
+                    cv2.putText(sim_img, f"Steering: {steering_angle:+.2f}", (10, 25),
+                    cv2.FONT_HERSHEY_SIMPLEX, 0.7, (250, 250, 250), 2)
+                    cv2.putText(sim_img, f"Speed: {speed:.2f}", (10, 55),
+                                cv2.FONT_HERSHEY_SIMPLEX, 0.7, (250, 250, 250), 2)
+                    cv2.imshow("Simulator", sim_img)
 
                 mp_drawing.draw_landmarks(image, hand_landmarks, mp_hands.HAND_CONNECTIONS)
 
