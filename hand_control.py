@@ -2,8 +2,17 @@ import cv2
 import mediapipe as mp
 import math
 import numpy as np
+import argparse
 from fuzzy_controller import fuzzy_control
 from simulator import CarSimulator
+
+# Parse command line arguments
+parser = argparse.ArgumentParser(description='Hand Gesture Control System')
+parser.add_argument('--input', type=str, default='camera', choices=['camera', 'video'],
+                    help='Input source: camera or video file')
+parser.add_argument('--video_path', type=str, default='', 
+                    help='Path to video file (required when input=video)')
+args = parser.parse_args()
 
 sim = CarSimulator()
 
@@ -88,7 +97,17 @@ hands = mp_hands.Hands(static_image_mode=False,
 mp_drawing = mp.solutions.drawing_utils
 
 # Start video capture
-cap = cv2.VideoCapture(0)
+if args.input == 'camera':
+    cap = cv2.VideoCapture(0)
+else:
+    if not args.video_path:
+        print("Error: Video path must be provided when input=video")
+        exit(1)
+    cap = cv2.VideoCapture(args.video_path)
+    if not cap.isOpened():
+        print(f"Error: Could not open video file {args.video_path}")
+        exit(1)
+
 started = False
 
 while cap.isOpened():
