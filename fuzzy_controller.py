@@ -74,8 +74,8 @@ fuzzy_sim = ctrl.ControlSystemSimulation(control_system)
 # Final function
 def fuzzy_control(right_angle, left_angle_abs):
     # Clip input to range
-    right_angle = np.clip(right_angle, -90, 90)
-    left_angle_abs = np.clip(left_angle_abs, 0, 90)
+    right_angle = np.clip(right_angle, -89.9, 89.9)
+    left_angle_abs = np.clip(left_angle_abs, 0.1, 89.9)
 
     fuzzy_sim.input['right_angle'] = right_angle
     fuzzy_sim.input['left_angle'] = left_angle_abs
@@ -87,6 +87,7 @@ def fuzzy_control(right_angle, left_angle_abs):
         return 0, 0
 
     # Extract outputs
+    # print(f"{fuzzy_sim.output['steering_angle']}")
     abs_steering = round(fuzzy_sim.output['steering_angle'], 2)
     abs_speed = round(fuzzy_sim.output['speed'], 2)
 
