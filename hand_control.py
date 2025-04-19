@@ -4,6 +4,7 @@ import math
 import numpy as np
 import argparse
 from fuzzy_controller import fuzzy_control
+from pid_controller import pid_control, reset_pid
 from simulator import CarSimulator
 
 # Parse command line arguments
@@ -12,6 +13,8 @@ parser.add_argument('--input', type=str, default='camera', choices=['camera', 'v
                     help='Input source: camera or video file')
 parser.add_argument('--video_path', type=str, default='', 
                     help='Path to video file (required when input=video)')
+parser.add_argument('--controller', type=str, default='fuzzy', choices=['fuzzy', 'pid'],
+                    help='Control system: fuzzy or pid')
 args = parser.parse_args()
 
 sim = CarSimulator()
@@ -154,12 +157,18 @@ while cap.isOpened():
                 
                 # print(f"{right_angle}, {left_angle}")
                 if right_angle is not None and left_angle is not None:
-                    steering_angle, speed = fuzzy_control(right_angle, abs(left_angle))
+                    if args.controller == 'fuzzy':
+                        steering_angle, speed = fuzzy_control(right_angle, abs(left_angle))
+                    else:  # pid
+                        steering_angle, speed = pid_control(right_angle, abs(left_angle))
+                        
                     sim.update(steering_angle, speed)
                     sim_img = sim.draw()
                     cv2.putText(sim_img, f"Steering: {steering_angle:+.2f}", (10, 25),
                     cv2.FONT_HERSHEY_SIMPLEX, 0.7, (250, 250, 250), 2)
                     cv2.putText(sim_img, f"Speed: {speed:.2f}", (10, 55),
+                                cv2.FONT_HERSHEY_SIMPLEX, 0.7, (250, 250, 250), 2)
+                    cv2.putText(sim_img, f"Controller: {args.controller}", (10, 85),
                                 cv2.FONT_HERSHEY_SIMPLEX, 0.7, (250, 250, 250), 2)
                     cv2.imshow("Simulator", sim_img)
 
@@ -167,6 +176,8 @@ while cap.isOpened():
 
                 if is_hand_open(hand_landmarks):
                     started = False
+                    if args.controller == 'pid':
+                        reset_pid()  # Reset PID controller when stopping
 
     # Display angles
     if right_angle is not None:
