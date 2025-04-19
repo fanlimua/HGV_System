@@ -74,8 +74,8 @@ fuzzy_sim = ctrl.ControlSystemSimulation(control_system)
 # Final function
 def fuzzy_control(right_angle, left_angle_abs):
     # Clip input to range
-    right_angle = np.clip(right_angle, -89.9, 89.9)
-    left_angle_abs = np.clip(left_angle_abs, 0.1, 89.9)
+    right_angle = np.clip(right_angle, -89.99, 89.99)
+    left_angle_abs = np.clip(left_angle_abs, 0.01, 89.99)
 
     fuzzy_sim.input['right_angle'] = right_angle
     fuzzy_sim.input['left_angle'] = left_angle_abs
