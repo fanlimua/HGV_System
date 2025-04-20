@@ -3,8 +3,12 @@ import mediapipe as mp
 import math
 import numpy as np
 import argparse
+import time
+import matplotlib.pyplot as plt
+from matplotlib.animation import FuncAnimation
 from fuzzy_controller import fuzzy_control
 from pid_controller import pid_control, reset_pid
+from linear_controller import linear_control
 from simulator import CarSimulator
 
 # Parse command line arguments
@@ -13,12 +17,49 @@ parser.add_argument('--input', type=str, default='camera', choices=['camera', 'v
                     help='Input source: camera or video file')
 parser.add_argument('--video_path', type=str, default='', 
                     help='Path to video file (required when input=video)')
-parser.add_argument('--controller', type=str, default='fuzzy', choices=['fuzzy', 'pid'],
-                    help='Control system: fuzzy or pid')
+parser.add_argument('--controller', type=str, default='fuzzy', choices=['fuzzy', 'pid', 'linear'],
+                    help='Control system: fuzzy, pid, or linear')
+parser.add_argument('--plot', action='store_true', 
+                    help='Enable real-time plotting of controller outputs')
 args = parser.parse_args()
 
 sim = CarSimulator()
 
+# 存储控制器输出数据的列表
+if args.plot:
+    # 创建画布和子图
+    plt.ion()  # 交互模式
+    fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(8, 6))
+    fig.suptitle(f'{args.controller.capitalize()} Controller Output')
+    
+    # 设置子图标题和标签
+    ax1.set_title('Steering Angle')
+    ax1.set_ylabel('Angle (degrees)')
+    ax1.set_xlabel('Time (s)')
+    ax1.grid(True)
+    
+    ax2.set_title('Speed')
+    ax2.set_ylabel('Speed (units)')
+    ax2.set_xlabel('Time (s)')
+    ax2.grid(True)
+    
+    # 初始化数据列表
+    time_data = []
+    steering_data = []
+    speed_data = []
+    
+    # 记录起始时间
+    start_time = time.time()
+    
+    # 初始化线条
+    steering_line, = ax1.plot([], [], 'r-')
+    speed_line, = ax2.plot([], [], 'b-')
+    
+    # 设置显示窗口
+    plt.tight_layout()
+    plt.subplots_adjust(top=0.9)
+    plt.show(block=False)
+    plt.pause(0.1)
 
 # Calculate angle between thumb vector and vertical line
 def calculate_relative_angle(hand_landmarks, image_width, image_height, is_right):
@@ -159,8 +200,38 @@ while cap.isOpened():
                 if right_angle is not None and left_angle is not None:
                     if args.controller == 'fuzzy':
                         steering_angle, speed = fuzzy_control(right_angle, abs(left_angle))
-                    else:  # pid
+                    elif args.controller == 'pid':
                         steering_angle, speed = pid_control(right_angle, abs(left_angle))
+                    else:  # linear
+                        steering_angle, speed = linear_control(right_angle, abs(left_angle))
+                    
+                    # 更新实时图表
+                    if args.plot:
+                        current_time = time.time() - start_time
+                        time_data.append(current_time)
+                        steering_data.append(steering_angle)
+                        speed_data.append(speed)
+                        
+                        # 限制数据点数量，保持最近的100个点
+                        max_points = 100
+                        if len(time_data) > max_points:
+                            time_data = time_data[-max_points:]
+                            steering_data = steering_data[-max_points:]
+                            speed_data = speed_data[-max_points:]
+                        
+                        # 更新图表数据
+                        steering_line.set_data(time_data, steering_data)
+                        speed_line.set_data(time_data, speed_data)
+                        
+                        # 自动调整坐标轴范围
+                        ax1.relim()
+                        ax1.autoscale_view()
+                        ax2.relim()
+                        ax2.autoscale_view()
+                        
+                        # 刷新图表
+                        fig.canvas.draw_idle()
+                        fig.canvas.flush_events()
                         
                     sim.update(steering_angle, speed)
                     sim_img = sim.draw()
@@ -191,3 +262,5 @@ while cap.isOpened():
 
 cap.release()
 cv2.destroyAllWindows()
+if args.plot:
+    plt.close(fig)

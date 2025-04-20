@@ -3,12 +3,12 @@ import skfuzzy as fuzz
 from skfuzzy import control as ctrl
 
 # Define inputs
-right_angle_input = ctrl.Antecedent(np.arange(-90, 91, 1), 'right_angle')
-left_angle_input = ctrl.Antecedent(np.arange(0, 91, 1), 'left_angle')
+right_angle_input = ctrl.Antecedent(np.arange(-90, 90, 1), 'right_angle')
+left_angle_input = ctrl.Antecedent(np.arange(0, 90, 1), 'left_angle')
 
 # Define outputs
-steering_output = ctrl.Consequent(np.arange(0, 46, 1), 'steering_angle')   # 0 to 45 degrees
-speed_output = ctrl.Consequent(np.arange(0, 6.1, 0.1), 'speed')            # 0 to 5 units
+steering_output = ctrl.Consequent(np.arange(0, 45, 1), 'steering_angle')   # 0 to 45 degrees
+speed_output = ctrl.Consequent(np.arange(0, 6, 0.1), 'speed')            # 0 to 5 units
 
 # Membership functions (overlapping)
 right_angle_input['strong_left'] = fuzz.trimf(right_angle_input.universe, [-90, -75, -60])

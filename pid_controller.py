@@ -46,8 +46,8 @@ class PIDController:
         self.last_time = time.time()
 
 # Initialize PID controllers - tune these parameters as needed
-steering_pid = PIDController(kp=0.5, ki=0.1, kd=0.05)
-speed_pid = PIDController(kp=0.5, ki=0.01, kd=0.01)
+steering_pid = PIDController(kp=0.3, ki=0.1, kd=0.05)
+speed_pid = PIDController(kp=0.3, ki=0.1, kd=0.05)
 
 def pid_control(right_angle, left_angle_abs):
     """
