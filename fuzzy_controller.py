@@ -23,10 +23,9 @@ left_angle_input['medium'] = fuzz.trimf(left_angle_input.universe, [40, 55, 70])
 left_angle_input['high'] = fuzz.trimf(left_angle_input.universe, [60, 75, 90])
 left_angle_input['very_high'] = fuzz.trimf(left_angle_input.universe, [80, 90, 90])
 
-steering_output['none'] = fuzz.trimf(steering_output.universe, [0, 0, 10])
-steering_output['small'] = fuzz.trimf(steering_output.universe, [5, 15, 25])
-steering_output['medium'] = fuzz.trimf(steering_output.universe, [20, 30, 40])
-steering_output['large'] = fuzz.trimf(steering_output.universe, [35, 45, 45])
+steering_output['none'] = fuzz.trimf(steering_output.universe, [0, 0, 22.5])
+steering_output['medium'] = fuzz.trimf(steering_output.universe, [0, 22.5, 45])
+steering_output['large'] = fuzz.trimf(steering_output.universe, [22.5, 45, 45])
 
 speed_output['stop'] = fuzz.trimf(speed_output.universe, [0, 0, 1])
 speed_output['slow'] = fuzz.trimf(speed_output.universe, [0.5, 1.5, 2.5])
