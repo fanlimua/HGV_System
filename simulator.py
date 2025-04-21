@@ -13,6 +13,10 @@ class CarSimulator:
         self.angle_deg = 0  # Orientation angle in degrees
         self.trajectory = []
 
+    def get_position(self):
+        """返回当前小车的(x, y)位置坐标"""
+        return self.position[0], self.position[1]
+
     def update(self, steering_angle, speed):
         """
         steering_angle: rotation command (degrees), positive for right turn, negative for left

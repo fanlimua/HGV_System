@@ -11,21 +11,24 @@ steering_output = ctrl.Consequent(np.arange(0, 45, 1), 'steering_angle')   # 0 t
 speed_output = ctrl.Consequent(np.arange(0, 6, 0.1), 'speed')            # 0 to 5 units
 
 # Membership functions (overlapping)
-right_angle_input['strong_left'] = fuzz.trimf(right_angle_input.universe, [-90, -90, -45])
-right_angle_input['left'] = fuzz.trimf(right_angle_input.universe, [-90, -45, 0])
-right_angle_input['straight'] = fuzz.trimf(right_angle_input.universe, [-45, 0, 45])
-right_angle_input['right'] = fuzz.trimf(right_angle_input.universe, [0, 45, 90])
-right_angle_input['strong_right'] = fuzz.trimf(right_angle_input.universe, [45, 90, 90])
+right_angle_input['strong_left'] = fuzz.trimf(right_angle_input.universe, [-90, -90, -60])
+right_angle_input['left']        = fuzz.trimf(right_angle_input.universe, [-90, -60, -30])
+right_angle_input['small_left']  = fuzz.trimf(right_angle_input.universe, [-60, -30, 0])
+right_angle_input['straight']    = fuzz.trimf(right_angle_input.universe, [-30, 0, 30])
+right_angle_input['small_right'] = fuzz.trimf(right_angle_input.universe, [0, 30, 60])
+right_angle_input['right']       = fuzz.trimf(right_angle_input.universe, [30, 60, 90])
+right_angle_input['strong_right']= fuzz.trimf(right_angle_input.universe, [60, 90, 90])
 
-left_angle_input['very_low'] = fuzz.trimf(left_angle_input.universe, [0, 0, 22.5])
-left_angle_input['low'] = fuzz.trimf(left_angle_input.universe, [0, 22.5, 45])
-left_angle_input['medium'] = fuzz.trimf(left_angle_input.universe, [22.5, 45, 67.5])
-left_angle_input['high'] = fuzz.trimf(left_angle_input.universe, [45, 67.5, 90])
-left_angle_input['very_high'] = fuzz.trimf(left_angle_input.universe, [67.5, 90, 90])
+left_angle_input['very_low']   = fuzz.trimf(left_angle_input.universe, [0, 0, 22.5])
+left_angle_input['low']        = fuzz.trimf(left_angle_input.universe, [0, 22.5, 45])
+left_angle_input['medium']     = fuzz.trimf(left_angle_input.universe, [22.5, 45, 67.5])
+left_angle_input['high']       = fuzz.trimf(left_angle_input.universe, [45, 67.5, 90])
+left_angle_input['very_high']  = fuzz.trimf(left_angle_input.universe, [67.5, 90, 90])
 
-steering_output['none'] = fuzz.trimf(steering_output.universe, [0, 0, 22.5])
-steering_output['medium'] = fuzz.trimf(steering_output.universe, [0, 22.5, 45])
-steering_output['large'] = fuzz.trimf(steering_output.universe, [22.5, 45, 45])
+steering_output['none'] = fuzz.trimf(steering_output.universe, [0, 0, 15])
+steering_output['small'] = fuzz.trimf(steering_output.universe, [0, 15, 30])
+steering_output['medium'] = fuzz.trimf(steering_output.universe, [15, 30, 45])
+steering_output['large'] = fuzz.trimf(steering_output.universe, [30, 45, 45])
 
 speed_output['stop'] = fuzz.trimf(speed_output.universe, [0, 0, 1.5])
 speed_output['slow'] = fuzz.trimf(speed_output.universe, [0, 1.5, 3])
@@ -33,7 +36,7 @@ speed_output['medium'] = fuzz.trimf(speed_output.universe, [1.5, 3, 4.5])
 speed_output['fast'] = fuzz.trimf(speed_output.universe, [3, 4.5, 6])
 speed_output['very_fast'] = fuzz.trimf(speed_output.universe, [4.5, 6, 6])
 
-# All combinations: 5x5 = 25 rules
+# All combinations: 7x5 = 35 rules
 rules = [
     ctrl.Rule(right_angle_input['strong_left'] & left_angle_input['very_low'], (steering_output['large'], speed_output['stop'])),
     ctrl.Rule(right_angle_input['strong_left'] & left_angle_input['low'],       (steering_output['large'], speed_output['slow'])),
@@ -47,11 +50,23 @@ rules = [
     ctrl.Rule(right_angle_input['left'] & left_angle_input['high'],      (steering_output['medium'], speed_output['fast'])),
     ctrl.Rule(right_angle_input['left'] & left_angle_input['very_high'], (steering_output['medium'], speed_output['very_fast'])),
 
+    ctrl.Rule(right_angle_input['small_left'] & left_angle_input['very_low'], (steering_output['small'], speed_output['stop'])),
+    ctrl.Rule(right_angle_input['small_left'] & left_angle_input['low'],       (steering_output['small'], speed_output['slow'])),
+    ctrl.Rule(right_angle_input['small_left'] & left_angle_input['medium'],    (steering_output['small'], speed_output['medium'])),
+    ctrl.Rule(right_angle_input['small_left'] & left_angle_input['high'],      (steering_output['small'], speed_output['fast'])),
+    ctrl.Rule(right_angle_input['small_left'] & left_angle_input['very_high'], (steering_output['small'], speed_output['very_fast'])),
+
     ctrl.Rule(right_angle_input['straight'] & left_angle_input['very_low'], (steering_output['none'], speed_output['stop'])),
     ctrl.Rule(right_angle_input['straight'] & left_angle_input['low'],       (steering_output['none'], speed_output['slow'])),
     ctrl.Rule(right_angle_input['straight'] & left_angle_input['medium'],    (steering_output['none'], speed_output['medium'])),
     ctrl.Rule(right_angle_input['straight'] & left_angle_input['high'],      (steering_output['none'], speed_output['fast'])),
     ctrl.Rule(right_angle_input['straight'] & left_angle_input['very_high'], (steering_output['none'], speed_output['very_fast'])),
+
+    ctrl.Rule(right_angle_input['small_right'] & left_angle_input['very_low'], (steering_output['small'], speed_output['stop'])),
+    ctrl.Rule(right_angle_input['small_right'] & left_angle_input['low'],       (steering_output['small'], speed_output['slow'])),
+    ctrl.Rule(right_angle_input['small_right'] & left_angle_input['medium'],    (steering_output['small'], speed_output['medium'])),
+    ctrl.Rule(right_angle_input['small_right'] & left_angle_input['high'],      (steering_output['small'], speed_output['fast'])),
+    ctrl.Rule(right_angle_input['small_right'] & left_angle_input['very_high'], (steering_output['small'], speed_output['very_fast'])),
 
     ctrl.Rule(right_angle_input['right'] & left_angle_input['very_low'], (steering_output['medium'], speed_output['stop'])),
     ctrl.Rule(right_angle_input['right'] & left_angle_input['low'],       (steering_output['medium'], speed_output['slow'])),
