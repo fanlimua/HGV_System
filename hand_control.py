@@ -7,7 +7,8 @@ import time
 import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
 # from fuzzy_controller import fuzzy_control
-from fuzzy_controller_35 import fuzzy_control
+from fuzzy_controller_55 import fuzzy_control
+# from fuzzy_controller_35 import fuzzy_control
 from pid_controller import pid_control, reset_pid
 from linear_controller import linear_control
 from simulator import CarSimulator

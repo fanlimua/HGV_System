@@ -3,13 +3,14 @@ import cv2
 import math
 
 class CarSimulator:
-    def __init__(self, width=600, height=600):
+    def __init__(self, width=1000, height=1000):
         self.canvas_size = (width, height)
         self.reset()
 
     def reset(self):
         # Initialize car position to center and reset trajectory
-        self.position = np.array([self.canvas_size[0] // 2, self.canvas_size[1] // 2], dtype=np.float32)
+        # self.position = np.array([self.canvas_size[0] // 2, self.canvas_size[1] // 2], dtype=np.float32)
+        self.position = np.array([300, 300], dtype=np.float32)
         self.angle_deg = 0  # Orientation angle in degrees
         self.trajectory = []
 

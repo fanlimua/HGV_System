@@ -27,11 +27,11 @@ steering_output['none'] = fuzz.trimf(steering_output.universe, [0, 0, 22.5])
 steering_output['medium'] = fuzz.trimf(steering_output.universe, [0, 22.5, 45])
 steering_output['large'] = fuzz.trimf(steering_output.universe, [22.5, 45, 45])
 
-speed_output['stop'] = fuzz.trimf(speed_output.universe, [0, 0, 1.5])
-speed_output['slow'] = fuzz.trimf(speed_output.universe, [0, 1.5, 3])
-speed_output['medium'] = fuzz.trimf(speed_output.universe, [1.5, 3, 4.5])
-speed_output['fast'] = fuzz.trimf(speed_output.universe, [3, 4.5, 6])
-speed_output['very_fast'] = fuzz.trimf(speed_output.universe, [4.5, 6, 6])
+speed_output['stop'] = fuzz.trimf(speed_output.universe, [0, 0, 0])
+speed_output['slow'] = fuzz.trimf(speed_output.universe, [1.5, 1.5, 1.5])
+speed_output['medium'] = fuzz.trimf(speed_output.universe, [3, 3, 3])
+speed_output['fast'] = fuzz.trimf(speed_output.universe, [4.5, 4.5, 4.5])
+speed_output['very_fast'] = fuzz.trimf(speed_output.universe, [6, 6, 6])
 
 # All combinations: 5x5 = 25 rules
 rules = [
