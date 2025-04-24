@@ -3,8 +3,8 @@ import socket
 import struct
 
 # Configuration
-SERVER_IP = '192.168.1.254'  # <-- Change to your server's LAN IP
-SERVER_PORT = 9999
+SERVER_IP = '172.20.10.7'  # <-- Change to your server's LAN IP
+SERVER_PORT = 5623
 
 cap = cv2.VideoCapture(0)
 client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
