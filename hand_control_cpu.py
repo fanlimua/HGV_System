@@ -6,8 +6,8 @@ import argparse
 import time
 import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
-#from fuzzy_controller import fuzzy_control
-from fuzzy_controller_55 import fuzzy_control
+from fuzzy_controller import fuzzy_control
+#from fuzzy_controller_55 import fuzzy_control
 from pid_controller import pid_control, reset_pid
 from linear_controller import linear_control
 from simulator import CarSimulator
@@ -182,8 +182,8 @@ def are_fingers_folded(hand_landmarks):
 mp_hands = mp.solutions.hands
 hands = mp_hands.Hands(static_image_mode=False,
                        max_num_hands=2,
-                       min_detection_confidence=0.7,
-                       min_tracking_confidence=0.7)
+                       min_detection_confidence=0.5,
+                       min_tracking_confidence=0.5)
 mp_drawing = mp.solutions.drawing_utils
 
 # Start video capture
@@ -231,7 +231,7 @@ jetson.start()
 
 idle_samples = []
 for _ in range(5):
-        idle_samples.append(jetson.stats["Power POM_5V_GPU"])
+        idle_samples.append(jetson.stats["Power POM_5V_CPU"])
         time.sleep(0.2)
 idle_baseline = sum(idle_samples)/len(idle_samples)
 print(f"Idle GPU baseline: {idle_baseline:.3f} W")
@@ -245,7 +245,7 @@ stop_sampling_event = threading.Event()
 # def sample_gpu_power():
 #     with jtop() as jetson:
 #         while not stop_sampling_event.is_set():
-#             power_trace.append(jetson.stats["Power POM_5V_GPU"])
+#             power_trace.append(jetson.stats["Power POM_5V_CPU"])
 #             time_trace.append(time.time())
 #             time.sleep(0.005)  # 5 ms intervals
 
@@ -255,9 +255,9 @@ def sample_gpu_power(jetson):
     while not stop_sampling_event.is_set():
         try:
             if jetson.ok():
-                power_trace.append(jetson.stats["Power POM_5V_GPU"])
+                power_trace.append(jetson.stats["Power POM_5V_CPU"])
                 time_trace.append(time.time())
-               # print("Trace len:", len(power_trace), "Last power:", power_trace[-1])
+                print(jetson.stats)
         except Exception as e:
             print("Power read failed:", e)
         time.sleep(0.001)
@@ -276,7 +276,7 @@ try:
             # mem_before_e2e = proc.memory_info().rss / (1024**2) ## memory before end-to-end
             # p0_e2e = jetson.stats["Power POM_5V_GPU"]
 
-            e2e_start = time.time()
+            # t0 = time.time()
             success, image = cap.read()
         
             if not success:
@@ -300,14 +300,14 @@ try:
             #p0_mp = jetson.stats["Power POM_5V_GPU"] # power before MP-only
             # print(p0_mp)
             
-            #e2e_start = time.time()
+            e2e_start = time.time()
 
             #t1 = time.time() # time before MP-only
             results = hands.process(image_rgb)
 
             # sample after MP-only
             t2 = time.time() # time after MP-only
-            print(f"[MP] e2e_start: {e2e_start:.4f}, t2: {t2:.4f}, rel_start: {e2e_start - time_trace[0]:.4f}")
+            #print(f"[MP] e2e_start: {e2e_start:.4f}, t2: {t2:.4f}, rel_start: {e2e_start - time_trace[0]:.4f}")
 
              # Optional sleep for clarity (visual separation in graph)
             time.sleep(0.2)
@@ -474,8 +474,8 @@ try:
             # print(e2e_times_per_frame)
             e2e_times.append(e2e_times_per_frame) # end-to-end time
             mp_times .append(t2 - e2e_start) # MP-only time
-            print(e2e_times_per_frame)
-	    #print(e2e_times_per_frame)
+            #print(f"e2e_start={e2e_start:.4f}, t2={t2:.4f}, duration={t2 - e2e_start:.4f}")
+
             mem_e2e_deltas.append(mem_after_e2e - mem_before_mp) # memory difference for end-to-end
             mem_mp_deltas .append(mem_after_mp  - mem_before_mp) # memory difference for MP-only
             # power_e2e.append(((p0_mp )+(p1_e2e)/2.0) - idle_baseline)
@@ -527,7 +527,7 @@ finally:
             cv2.destroyAllWindows()
         # ───── FINAL METRICS ─────
             
-            power_trace_np = np.array(power_trace) - idle_baseline
+            power_trace_np = np.array(power_trace)
             # print("power trace np")
             # print(power_trace_np)
             time_trace_np = np.array(time_trace) - time_trace[0]
@@ -571,7 +571,7 @@ finally:
 
             # Plotting the single clear timeline graph
             plt.figure(figsize=(14, 6))
-            plt.plot(time_trace_np, power_trace_np, color='blue', label='GPU Power (W)')
+            plt.plot(time_trace_np, power_trace_np, color='blue', label='CPU Power (mW)')
 
             # Highlight E2E intervals (green) and MP intervals (red) clearly within E2E intervals
             # for start, end in e2e_intervals:
@@ -585,22 +585,22 @@ finally:
             unique_labels = dict(zip(labels, handles))
             plt.legend(unique_labels.values(), unique_labels.keys())
 
-            plt.title("GPU Power Over Time with Highlighted Intervals (E2E and MediaPipe)")
+            plt.title("CPU Power Over Time with Highlighted Intervals (E2E and MediaPipe)")
             plt.xlabel("Time (s)")
-            plt.ylabel("Power Δ (W)")
+            plt.ylabel("Power Δ (mW)")
             plt.grid(True)
             plt.tight_layout()
-            plt.savefig("results/gpu_power_intervals_222.png")
+            plt.savefig("results/cpu_power_intervals_25_5.png")
 
             # ───── LOG FILE ─────
-            with open("results/metrics_222.log","w") as f:
+            with open("results/metrics_cpu_25_5.log","w") as f:
                 f.write(f"Idle baseline (W):          {idle_baseline:.3f}\n")
                 f.write(f"Avg E2E latency (ms):       {avg_e2e_lat*1000:.1f}\n")
                 f.write(f"Avg MP latency (ms):        {avg_mp_lat*1000:.1f}\n")
                 f.write(f"FPS E2E:                    {fps_e2e:.1f}\n")
                 f.write(f"FPS MP:                     {fps_mp:.1f}\n")
-                f.write(f"Avg power Δ E2E (W):        {avg_e2e_power:.3f}\n")
-                f.write(f"Avg power Δ MP (W):         {avg_mp_power:.3f}\n")
+                f.write(f"Avg power Δ E2E (mW):        {avg_e2e_power:.3f}\n")
+                f.write(f"Avg power Δ MP (mW):         {avg_mp_power:.3f}\n")
                 f.write(f"Avg mem Δ E2E (MB):         {avg_mem_e2e:.3f}\n")
                 f.write(f"Avg mem Δ MP (MB):          {avg_mem_mp:.3f}\n")
             print("Metrics logged to metrics.log")
