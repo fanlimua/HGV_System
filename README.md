@@ -24,10 +24,12 @@ The car's movement is controlled by hand angles captured from the user's gesture
 
 **fuzzy_controller.py**
 
-- Implements the fuzzy inference system  
+- Implements the fuzzy control system  
 - Input: Right and left hand angles  
 - Output: Car's steering angle and speed
 
+**linear_controller.py**
+- Implements the linear control system  
 
 **simulator.py**
 
@@ -36,7 +38,16 @@ The car's movement is controlled by hand angles captured from the user's gesture
 
 **How to Run**
 
-To launch the gesture-controlled car simulator, run:
+To launch the gesture-controlled **car simulator**, run:
 
 ```bash
-python hand_control.py
+python hand_control_sim.py --input camera # Using camera
+python hand_control_sim.py --input video --video_path inputs/short_straight.mp4 --controller linear # Using pre-record video
+```
+
+To launch the gesture-controlled **remotely**, run:
+
+```bash
+python server_robot_receiver.py # Robot side
+python client_camera_sender.py # Client side, need to modify the IP to server's IP
+```
