@@ -51,3 +51,14 @@ To launch the gesture-controlled **remotely**, run:
 python server_robot_receiver.py # Robot side
 python client_camera_sender.py # Client side, need to modify the IP to server's IP
 ```
+Installing Mediapipe 0.8.5 on jetson Nano
+- We follow this link to install mediapipe-GPU on Jetson[https://jetson-docs.com/libraries/mediapipe/overview]
+- To build the mediapipe-CPU
+  - First, you need to install bazel in your system specifically 3.7.2 for 0.8.5  
+  - Clone this mediapipe files [https://github.com/google-ai-edge/mediapipe]: ``` git clone -b 0.8.5 https://github.com/google-ai-edge/mediapipe.git```
+  - Run the command: ``` cd mediapipe```
+  -  Run this command to build the C++ program ```python3 setup.py install``` 
+  - Then create the wheel ```python3 setup.py bdist_wheel```
+  - Now you have folder named dist: ``` pip install dist/filename.whl```
+- Now to run the evaluation for Jetson Nano GPU efficiency: ```python3 hand_control_efficiency.py```
+- - Now to run the evaluation for Jetson Nano CPU efficiency: ```python3 hand_control_CPU.py```
