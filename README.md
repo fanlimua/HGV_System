@@ -4,7 +4,9 @@ This project implements a hand gesture-controlled vehicle system using fuzzy log
 The car's movement is controlled by hand angles captured from the user's gestures.
 
 
-## Gesture Start & Stop Detection 
+## Gesture 
+
+### Start & Stop Detection 
 
 - **Start Detection**: Show a thumbs-up gesture to start gesture control.  
 - **Stop Detection**: Open your palm fully facing the camera to stop gesture control.
